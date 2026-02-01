@@ -1,0 +1,57 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+repositories {
+    maven { url "https://repo.codemc.io/repository/nms/" }
+    maven { url "https://repo.papermc.io/repository/maven-public/" }
+    maven { url "https://hub.spigotmc.org/nexus/content/groups/public/" }
+}
+
+// 关键修改：将内部模块依赖从 compileOnly 改为 implementation
+dependencies {
+    implementation project(":api")
+    implementation project(":core")    // 确保是 implementation
+    implementation project(":loader")
+    implementation project(":flows")
+    //implementation project(":bukkit:injector") // 如果依赖，也改为implementation
+
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+shadowJar {
+    archiveBaseName.set('MultiLogin-Bukkit')
+    archiveClassifier.set('')
+    archiveVersion.set("Build_${version}")
+
+    // 1. 合并 core 模块的 shadowJar（作为类文件）
+    from(provider { project(":core").tasks.shadowJar.archiveFile })
+
+    // 2. 将 core 的 shadowJar 作为资源文件嵌入到根目录
+    into('') {
+        from(provider { project(":core").tasks.shadowJar.archiveFile })
+        rename { fileName -> 'MultiLogin-Core.JarFile' }
+    }
+
+    // 3. 添加 injector 模块的 Jar 作为资源文件
+    into('') {
+        from(provider { project(":bukkit:injector").tasks.shadowJar.archiveFile })
+        rename { fileName -> 'MultiLogin-Bukkit-Injector.JarFile' }
+    }
+
+    // 4. 包含loader模块的资源文件
+    from(project(":loader").sourceSets.main.resources) {
+        into ''
+    }
+
+    mergeServiceFiles()
+}
+
+artifacts {
+    archives shadowJar
+}

@@ -1,0 +1,90 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+// 1. 确保有正确的仓库来解析 Paper API 和其他依赖
+repositories {
+    mavenCentral()
+    // Paper 官方仓库
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    // Minecraft 库
+    maven { url 'https://libraries.minecraft.net/' }
+    // CodeMC 仓库
+    maven { url 'https://repo.codemc.io/repository/maven-public/' }
+    // ProtocolLib 仓库
+    maven { url 'https://repo.dmulloy2.net/repository/public/' }
+    
+    // OpenCollab 仓库（GeyserMC/Floodgate 的主仓库）
+    maven { url 'https://repo.opencollab.dev/main/' } 
+}
+
+dependencies {
+    // 项目内部模块依赖 - 保持 implementation
+    implementation project(':api')
+    implementation project(':loader')
+    implementation project(':flows')
+    
+    // Paper API - 保持 compileOnly（服务器提供）
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    
+    // ProtocolLib - 保持 compileOnly（用户自行安装）
+    compileOnly 'com.comphenix.protocol:ProtocolLib:5.3.0'
+	// Floodgate API - 用于基岩版玩家支持
+    // 注意：Floodgate 2.x 版本使用不同的包名，根据错误信息，代码使用的是 Floodgate 2.x API
+    compileOnly 'org.geysermc.floodgate:api:2.2.4-SNAPSHOT'
+    
+    // 以下是需要打包的运行时依赖（改为 implementation）
+    implementation 'com.zaxxer:HikariCP:5.0.1'              // 数据库连接池
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'     // HTTP客户端（包含Interceptor）
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    implementation 'com.google.code.gson:gson:2.10.1'       // JSON处理
+    implementation 'com.mojang:authlib:3.18.38'            // 正版验证库
+    implementation 'org.slf4j:slf4j-api:2.0.9'             // 日志接口
+    
+    // 数据库驱动（选择需要的）
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
+    implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
+    implementation 'com.h2database:h2:2.2.224'
+    implementation 'org.postgresql:postgresql:42.7.1'
+    
+    // 其他运行时必需的依赖
+    implementation 'commons-io:commons-io:2.15.1'
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    
+    // 测试依赖 - 保持不变
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+}
+
+// Java 版本设置
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Shadow Jar 配置
+shadowJar {
+    // 确保依赖被正确打包
+    configurations = [project.configurations.runtimeClasspath]
+    
+    // 重命名以避免冲突（可选但推荐）
+    relocate 'com.zaxxer.hikari', 'net.elytrium.multilogin.libs.hikari'
+    relocate 'okhttp3', 'net.elytrium.multilogin.libs.okhttp3'
+    relocate 'okio', 'net.elytrium.multilogin.libs.okio'
+    relocate 'com.google.gson', 'net.elytrium.multilogin.libs.gson'
+    relocate 'com.mojang.authlib', 'net.elytrium.multilogin.libs.authlib'
+    relocate 'org.slf4j', 'net.elytrium.multilogin.libs.slf4j'
+    
+    // 排除不需要的文件
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    
+    archiveFileName.set("MultiLogin-Core-${project.version}.jar")
+}
+
+artifacts {
+    archives shadowJar
+}
