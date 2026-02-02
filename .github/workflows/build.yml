@@ -45,14 +45,16 @@ jobs:
         if: env.release == 'false'
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: current
+          # 修改这里：固定 Gradle 版本为 8.5
+          gradle-version: '8.5'
           arguments: ShadowJar
 
       - name: Build Release
         if: env.release == 'true'
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: current
+          # 修改这里：固定 Gradle 版本为 8.5
+          gradle-version: '8.5'
           arguments: ShadowJar -Denv=final
 
       - name: Cleanup Gradle Cache
