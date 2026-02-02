@@ -26,7 +26,8 @@ jobs:
       - name: Build
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: current
+          # 修改这里：固定 Gradle 版本为 8.5
+          gradle-version: '8.5'
           arguments: ShadowJar
 
       - name: Cleanup Gradle Cache
